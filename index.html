@@ -3,279 +3,697 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineMatch AI - Movie Recommendation Chatbot</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Movie Recommendation Chatbot</title>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #334155; }
-        
+        /* --- CSS STYLES --- */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --user-msg-gradient: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            --bot-msg-bg: rgba(255, 255, 255, 0.85);
+            --glass-bg: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            background: var(--primary-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: white;
+        }
+
+        .background-text {
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .background-text h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .background-text p {
+            font-size: 1.2rem;
+        }
+
+        /* Chat Button (Floating) */
+        #chat-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid var(--glass-border);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        #chat-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Chat Window (Glassmorphism) */
+        #chat-window {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 380px;
+            height: 600px;
+            max-height: 80vh;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 999;
+        }
+
+        #chat-window.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* Header */
+        .chat-header {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .chat-header h3 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-actions button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: transform 0.2s;
+        }
+
+        .header-actions button:hover {
+            transform: scale(1.2);
+        }
+
+        /* Messages Area */
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+        }
+
+        /* Message Bubbles */
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            position: relative;
+            animation: fadeIn 0.3s ease forwards;
+            word-wrap: break-word;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+        .bot-message {
+            align-self: flex-start;
+            background: var(--bot-msg-bg);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: var(--user-msg-gradient);
+            color: var(--text-color);
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .timestamp {
+            display: block;
+            font-size: 0.7rem;
+            margin-top: 5px;
+            opacity: 0.6;
+            text-align: right;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            align-self: flex-start;
+            background: var(--bot-msg-bg);
+            padding: 12px 16px;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            display: none;
+            gap: 5px;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #764ba2;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Quick Replies / Chips */
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .reply-chip {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 14px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .reply-chip:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Movie Card Formatting inside Chat */
+        .movie-card {
+            background: rgba(0,0,0,0.04);
+            border-left: 4px solid #764ba2;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .movie-card h4 {
+            color: #553c7a;
+            margin-bottom: 5px;
+            font-size: 1.05rem;
+        }
+
+        .movie-tags {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .movie-desc {
+            font-size: 0.85rem;
+            color: #444;
+        }
+
+        /* Footer Input */
+        .chat-footer {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            outline: none;
+            font-size: 0.95rem;
+            backdrop-filter: blur(5px);
+        }
         
-        .bot-bubble { border-bottom-left-radius: 2px; }
-        .user-bubble { border-bottom-right-radius: 2px; }
+        .chat-footer input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chat-footer button {
+            background: white;
+            color: #764ba2;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .chat-footer button:hover {
+            transform: scale(1.05);
+        }
+
+        .chat-footer button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            #chat-window {
+                width: 90vw;
+                height: 75vh;
+                right: 5vw;
+                bottom: 90px;
+            }
+            #chat-btn {
+                right: 5vw;
+                bottom: 20px;
+            }
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen flex flex-col overflow-hidden">
+<body>
 
-    <!-- Header -->
-    <header class="flex items-center justify-between px-6 py-4 bg-slate-900 border-b border-slate-800 shadow-2xl z-10">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M17 3v18"/><path d="M3 7h4"/><path d="M3 12h18"/><path d="M3 17h4"/><path d="M17 12h4"/><path d="M17 17h4"/><path d="M17 7h4"/></svg>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold tracking-tight">CineMatch <span class="text-indigo-400">AI</span></h1>
-                <p class="text-[10px] text-slate-500 font-medium uppercase tracking-widest">Cinema Consultant</p>
-            </div>
-        </div>
-        <button id="reset-btn" class="p-2 hover:bg-slate-800 rounded-full transition-all text-slate-400 hover:text-white group">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-[-45deg] transition-transform"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-        </button>
-    </header>
+    <!-- Background Content for aesthetic -->
+    <div class="background-text">
+        <h1>Movie Matchmaker 🍿</h1>
+        <p>Your AI assistant for finding the perfect watch.</p>
+        <p style="font-size: 0.9rem; margin-top: 20px; opacity: 0.7;">Click the chat icon on the bottom right to start!</p>
+    </div>
+
+    <!-- Floating Chat Button -->
+    <div id="chat-btn" onclick="toggleChat()">
+        🎬
+    </div>
 
     <!-- Chat Window -->
-    <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar">
-        <!-- Welcome Message -->
-        <div class="flex justify-start animate-fade-in">
-            <div class="flex gap-3 max-w-[85%]">
-                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-                </div>
-                <div class="space-y-2">
-                    <div class="bg-slate-900 border border-slate-800 px-4 py-3 rounded-2xl bot-bubble text-sm leading-relaxed text-slate-200">
-                        Hello! I'm CineMatch AI. Tell me about your favorite genres, a specific vibe you're after, or even your current mood, and I'll find the perfect movie for you.
-                    </div>
-                </div>
+    <div id="chat-window">
+        <!-- Header -->
+        <div class="chat-header">
+            <h3>🤖 CineBot</h3>
+            <div class="header-actions">
+                <button onclick="restartChat()" title="Restart Chat">🔄</button>
+                <button onclick="toggleChat()" title="Close">✖</button>
             </div>
         </div>
-    </main>
 
-    <!-- Loading Indicator (Hidden by default) -->
-    <div id="loading-indicator" class="hidden px-4 md:px-8 pb-4">
-        <div class="max-w-3xl mx-auto flex justify-start items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-                <svg class="animate-spin text-indigo-500" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <!-- Messages Container -->
+        <div class="chat-body" id="chat-body">
+            <!-- Messages will be injected here via JS -->
+            
+            <!-- Typing Indicator (Hidden by default) -->
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
             </div>
-            <span id="loading-text" class="text-xs text-slate-500 italic font-medium">Scanning movie database...</span>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-footer">
+            <input type="text" id="user-input" placeholder="Type or select an option..." onkeypress="handleEnter(event)">
+            <button id="send-btn" onclick="handleSendClick()">➤</button>
         </div>
     </div>
 
-    <!-- Input Area -->
-    <footer class="p-4 bg-slate-900 border-t border-slate-800 relative z-10">
-        <form id="chat-form" class="max-w-3xl mx-auto relative group">
-            <input 
-                id="user-input"
-                type="text" 
-                placeholder="Suggest a moody noir film or a feel-good comedy..."
-                class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl py-4 pl-5 pr-14 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-500 shadow-inner"
-                autocomplete="off"
-            >
-            <button 
-                type="submit" 
-                id="send-btn"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 p-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-            </button>
-        </form>
-        <div class="max-w-3xl mx-auto mt-3 flex justify-center gap-4">
-            <span class="text-[10px] text-slate-600 font-semibold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> GEMINI 2.5 FLASH</span>
-            <span class="text-[10px] text-slate-600 font-semibold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span> IMAGEN 4.0</span>
-        </div>
-    </footer>
-
     <script>
-        const apiKey = ""; // Provided by environment
-        const chatContainer = document.getElementById('chat-container');
-        const chatForm = document.getElementById('chat-form');
-        const userInput = document.getElementById('user-input');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const loadingText = document.getElementById('loading-text');
-        const resetBtn = document.getElementById('reset-btn');
+        /* --- JAVASCRIPT LOGIC --- */
 
-        let messages = [
-            { role: 'assistant', content: "Hello! I'm CineMatch AI. Tell me about your favorite genres, a specific vibe you're after, or even your current mood, and I'll find the perfect movie for you." }
+        // 1. Movie Dataset (20 Movies)
+        const moviesDataset = [
+            { name: "The Dark Knight", genre: "Action", language: "English", mood: "Excited", desc: "Batman faces the Joker in a psychological and physical battle for Gotham City." },
+            { name: "Inception", genre: "Sci-Fi", language: "English", mood: "Excited", desc: "A skilled thief steals corporate secrets through the use of dream-sharing technology." },
+            { name: "3 Idiots", genre: "Comedy", language: "Hindi", mood: "Happy", desc: "Two friends search for their long lost companion, revisiting college memories." },
+            { name: "The Conjuring", genre: "Horror", language: "English", mood: "Excited", desc: "Paranormal investigators work to help a family terrorized by a dark presence." },
+            { name: "Sholay", genre: "Action", language: "Hindi", mood: "Excited", desc: "Two ex-convicts are hired by a retired police officer to capture a ruthless dacoit." },
+            { name: "The Notebook", genre: "Romance", language: "English", mood: "Sad", desc: "A poor yet passionate young man falls in love with a rich young woman." },
+            { name: "Dilwale Dulhania Le Jayenge", genre: "Romance", language: "Hindi", mood: "Happy", desc: "A young couple falls in love during a vacation across Europe." },
+            { name: "Tumbbad", genre: "Horror", language: "Hindi", mood: "Excited", desc: "A mythological story about a goddess who created the entire universe and her greed." },
+            { name: "Interstellar", genre: "Sci-Fi", language: "English", mood: "Sad", desc: "Explorers travel through a wormhole in space to ensure humanity's survival." },
+            { name: "PK", genre: "Sci-Fi", language: "Hindi", mood: "Happy", desc: "An alien on Earth loses his communication device and questions religious dogmas." },
+            { name: "Hera Pheri", genre: "Comedy", language: "Hindi", mood: "Happy", desc: "Three unemployed men look for answers to all their money problems via a wrong number." },
+            { name: "The Hangover", genre: "Comedy", language: "English", mood: "Happy", desc: "Three buddies wake up from a bachelor party in Vegas with no memory of the night." },
+            { name: "Titanic", genre: "Romance", language: "English", mood: "Sad", desc: "A young aristocrat falls in love with a poor artist aboard the luxurious, ill-fated R.M.S. Titanic." },
+            { name: "Kabir Singh", genre: "Romance", language: "Hindi", mood: "Sad", desc: "A brilliant but destructive surgeon goes on a downward spiral after losing his love." },
+            { name: "Get Out", genre: "Horror", language: "English", mood: "Excited", desc: "A young African-American visits his white girlfriend's parents, uncovering a disturbing secret." },
+            { name: "Bhool Bhulaiyaa", genre: "Horror", language: "Hindi", mood: "Happy", desc: "An NRI and his wife decide to stay in his ancestral home, paying no heed to the ghost warnings." },
+            { name: "Zindagi Na Milegi Dobara", genre: "Comedy", language: "Hindi", mood: "Relaxed", desc: "Three friends decide to turn their fantasy bachelor road trip into reality in Spain." },
+            { name: "The Matrix", genre: "Sci-Fi", language: "English", mood: "Excited", desc: "A hacker learns from mysterious rebels about the true nature of his reality." },
+            { name: "Forrest Gump", genre: "Comedy", language: "English", mood: "Relaxed", desc: "Historical events unfold from the perspective of an Alabama man with an IQ of 75." },
+            { name: "Yeh Jawaani Hai Deewani", genre: "Romance", language: "Hindi", mood: "Relaxed", desc: "Kabir and Naina meet during a trekking trip where she falls in love with him." }
         ];
 
-        function createMessageElement(role, content, poster = null, movieTitle = null) {
-            const div = document.createElement('div');
-            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in mb-6`;
-            
-            const inner = document.createElement('div');
-            inner.className = `flex gap-3 max-w-[85%] ${role === 'user' ? 'flex-row-reverse' : 'flex-row'}`;
-            
-            const avatar = document.createElement('div');
-            avatar.className = `flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${role === 'user' ? 'bg-indigo-600' : 'bg-slate-800 border border-slate-700'}`;
-            avatar.innerHTML = role === 'user' 
-                ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
-                : '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>';
+        // 2. Chatbot State & Flow
+        let chatOpen = false;
+        let currentStep = 0;
+        let userPreferences = { genre: "", language: "", mood: "" };
+        let isTyping = false;
+        let audioCtx; // For Web Audio API (Sound Effect)
 
-            const contentWrapper = document.createElement('div');
-            contentWrapper.className = 'space-y-3';
-
-            const bubble = document.createElement('div');
-            bubble.className = `px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${role === 'user' ? 'bg-indigo-600 text-white user-bubble' : 'bg-slate-900 border border-slate-800 text-slate-200 bot-bubble'}`;
-            bubble.textContent = content;
-            
-            contentWrapper.appendChild(bubble);
-
-            if (poster) {
-                const posterContainer = document.createElement('div');
-                posterContainer.className = 'rounded-xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl animate-fade-in max-w-xs transition-transform hover:scale-[1.02] duration-300';
-                
-                const posterHeader = document.createElement('div');
-                posterHeader.className = 'bg-slate-800 px-3 py-2 text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 text-slate-300';
-                posterHeader.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> AI Visual: ${movieTitle}`;
-                
-                const img = document.createElement('img');
-                img.src = poster;
-                img.alt = movieTitle;
-                img.className = 'w-full h-auto object-cover';
-                
-                posterContainer.appendChild(posterHeader);
-                posterContainer.appendChild(img);
-                contentWrapper.appendChild(posterContainer);
+        const conversationFlow = [
+            {
+                key: "genre",
+                question: "Hi there! 👋 I'm CineBot. Let's find a great movie for you!<br><br>What type of movie do you like?",
+                options: ["Action", "Comedy", "Horror", "Romance", "Sci-Fi"]
+            },
+            {
+                key: "language",
+                question: "Awesome choice! 🍿 What is your preferred language?",
+                options: ["Hindi", "English"]
+            },
+            {
+                key: "mood",
+                question: "Got it! 🗣️ Finally, what is your current mood?",
+                options: ["Happy", "Sad", "Excited", "Relaxed"]
             }
+        ];
 
-            inner.appendChild(avatar);
-            inner.appendChild(contentWrapper);
-            div.appendChild(inner);
-            
-            return div;
+        // DOM Elements
+        const chatWindow = document.getElementById('chat-window');
+        const chatBody = document.getElementById('chat-body');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const inputField = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // 3. UI Functions
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            if (chatOpen) {
+                chatWindow.classList.add('active');
+                if (currentStep === 0 && document.querySelectorAll('.message').length === 0) {
+                    startChatFlow();
+                }
+            } else {
+                chatWindow.classList.remove('active');
+            }
         }
 
-        async function generatePoster(title, visualDescription) {
-            loadingText.textContent = "Imagining the perfect poster...";
+        function playPopSound() {
             try {
-                const prompt = `A cinematic, high-quality professional movie poster for a film titled "${title}". Description: ${visualDescription}. Style: Modern Hollywood film poster, detailed, sharp focus, 8k resolution. No text on poster except title if possible.`;
+                // Initialize AudioContext on first user interaction to comply with browser policies
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
                 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        instances: [{ prompt }],
-                        parameters: { sampleCount: 1 }
-                    })
-                });
-
-                const data = await response.json();
-                if (data.predictions && data.predictions[0].bytesBase64Encoded) {
-                    return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
-                }
-            } catch (error) {
-                console.error("Poster generation failed", error);
-            }
-            return null;
-        }
-
-        async function callGemini(userMessage) {
-            const systemPrompt = `You are CineMatch AI, an expert movie recommendation chatbot. 
-            Your goal is to suggest specific movies based on user preferences.
-            
-            CRITICAL FORMATTING RULES:
-            1. If you are making a specific recommendation, wrap the movie title in [TITLE: Movie Name] and a brief visual description for a poster in [VISUAL: Description].
-            2. Be conversational, enthusiastic, and knowledgeable about cinema history and tropes.
-            3. If the user is vague, ask 1-2 targeted follow-up questions about their taste.
-            4. Keep responses concise but impactful.`;
-
-            const contents = messages.map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }]
-            }));
-            
-            contents.push({ role: 'user', parts: [{ text: userMessage }] });
-
-            let retries = 0;
-            const delays = [1000, 2000, 4000, 8000, 16000];
-
-            while (retries < 5) {
-                try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents,
-                            systemInstruction: { parts: [{ text: systemPrompt }] }
-                        })
-                    });
-
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
-                } catch (error) {
-                    retries++;
-                    if (retries === 5) throw error;
-                    await new Promise(r => setTimeout(r, delays[retries - 1]));
-                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+                
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {
+                console.log("Audio not supported or blocked.");
             }
         }
 
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = userInput.value.trim();
+        function getCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            return hours + ':' + minutes + ' ' + ampm;
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }, 50);
+        }
+
+        function setTyping(status) {
+            isTyping = status;
+            typingIndicator.style.display = status ? 'flex' : 'none';
+            inputField.disabled = status;
+            sendBtn.disabled = status;
+            if (status) scrollToBottom();
+        }
+
+        function appendMessage(sender, text, isHTML = false) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', sender === 'bot' ? 'bot-message' : 'user-message');
+            
+            const content = isHTML ? text : text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            msgDiv.innerHTML = `${content} <span class="timestamp">${getCurrentTime()}</span>`;
+            
+            // Insert before typing indicator
+            chatBody.insertBefore(msgDiv, typingIndicator);
+            scrollToBottom();
+            
+            if (sender === 'user') playPopSound();
+        }
+
+        function appendQuickReplies(options) {
+            const container = document.createElement('div');
+            container.classList.add('quick-replies');
+            container.id = 'current-replies';
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.classList.add('reply-chip');
+                btn.innerText = opt;
+                btn.onclick = () => handleUserInput(opt);
+                container.appendChild(btn);
+            });
+
+            chatBody.insertBefore(container, typingIndicator);
+            scrollToBottom();
+        }
+
+        function removeQuickReplies() {
+            const replies = document.getElementById('current-replies');
+            if (replies) replies.remove();
+        }
+
+        // 4. Core Logic
+        function startChatFlow() {
+            setTyping(true);
+            setTimeout(() => {
+                setTyping(false);
+                askQuestion();
+            }, 1000);
+        }
+
+        function askQuestion() {
+            if (currentStep < conversationFlow.length) {
+                const stepData = conversationFlow[currentStep];
+                appendMessage('bot', stepData.question, true);
+                appendQuickReplies(stepData.options);
+                inputField.focus();
+            } else {
+                generateRecommendations();
+            }
+        }
+
+        function handleUserInput(text) {
+            if (isTyping) return;
+            text = text.trim();
             if (!text) return;
 
-            // Add user message
-            userInput.value = '';
-            userInput.disabled = true;
-            document.getElementById('send-btn').disabled = true;
+            // Remove quick replies and clear input
+            removeQuickReplies();
+            inputField.value = '';
             
-            chatContainer.appendChild(createMessageElement('user', text));
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            // Show user message
+            appendMessage('user', text);
 
-            loadingIndicator.classList.remove('hidden');
-            loadingText.textContent = "Scanning movie database...";
+            // Validate Input against current step options
+            if (currentStep < conversationFlow.length) {
+                const stepData = conversationFlow[currentStep];
+                const validOptions = stepData.options.map(o => o.toLowerCase());
+                
+                if (validOptions.includes(text.toLowerCase())) {
+                    // Match found
+                    const matchedOption = stepData.options.find(o => o.toLowerCase() === text.toLowerCase());
+                    userPreferences[stepData.key] = matchedOption;
+                    currentStep++;
+                    
+                    setTyping(true);
+                    setTimeout(() => {
+                        setTyping(false);
+                        askQuestion();
+                    }, 1000);
+                } else {
+                    // Invalid input fallback
+                    setTyping(true);
+                    setTimeout(() => {
+                        setTyping(false);
+                        appendMessage('bot', "Oops! I didn't quite catch that. Please select one of the options or type a valid choice. 😅");
+                        appendQuickReplies(stepData.options);
+                    }, 800);
+                }
+            }
+        }
 
-            try {
-                const aiResponse = await callGemini(text);
+        function handleEnter(e) {
+            if (e.key === 'Enter') handleSendClick();
+        }
+
+        function handleSendClick() {
+            handleUserInput(inputField.value);
+        }
+
+        function restartChat() {
+            chatBody.innerHTML = '';
+            chatBody.appendChild(typingIndicator);
+            currentStep = 0;
+            userPreferences = { genre: "", language: "", mood: "" };
+            inputField.value = '';
+            startChatFlow();
+        }
+
+        // 5. Smart Recommendation Engine
+        function generateRecommendations() {
+            setTyping(true);
+            
+            setTimeout(() => {
+                setTyping(false);
                 
-                // Parse AI response for tags
-                const titleMatch = aiResponse.match(/\[TITLE:\s*(.*?)\]/);
-                const visualMatch = aiResponse.match(/\[VISUAL:\s*(.*?)\]/);
+                const { genre, language, mood } = userPreferences;
                 
-                let posterUrl = null;
-                let movieTitle = null;
-                
-                if (titleMatch && visualMatch) {
-                    movieTitle = titleMatch[1];
-                    posterUrl = await generatePoster(movieTitle, visualMatch[1]);
+                // 1st Pass: Exact match for all 3
+                let matches = moviesDataset.filter(m => 
+                    m.genre === genre && m.language === language && m.mood === mood
+                );
+
+                let matchType = "exact";
+
+                // 2nd Pass: Match Genre & Language (Fallback 1)
+                if (matches.length === 0) {
+                    matches = moviesDataset.filter(m => m.genre === genre && m.language === language);
+                    matchType = "partial-lang";
                 }
 
-                // Clean up tags from display text
-                const cleanText = aiResponse.replace(/\[TITLE:.*?\]/g, '').replace(/\[VISUAL:.*?\]/g, '').trim();
+                // 3rd Pass: Match Genre only (Fallback 2)
+                if (matches.length === 0) {
+                    matches = moviesDataset.filter(m => m.genre === genre);
+                    matchType = "partial-genre";
+                }
 
-                // Store in history
-                messages.push({ role: 'user', content: text });
-                messages.push({ role: 'assistant', content: cleanText });
+                // Shuffle and limit to 3 recommendations
+                matches = matches.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-                // Add AI message to UI
-                chatContainer.appendChild(createMessageElement('assistant', cleanText, posterUrl, movieTitle));
-            } catch (err) {
-                chatContainer.appendChild(createMessageElement('assistant', "I'm having trouble accessing my cinema archives. Please try again."));
-            } finally {
-                loadingIndicator.classList.add('hidden');
-                userInput.disabled = false;
-                document.getElementById('send-btn').disabled = false;
-                userInput.focus();
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-        });
+                // Build HTML Response
+                let responseHTML = `Here are some recommendations tailored for you! 🎬✨<br>`;
+                
+                if (matchType !== "exact") {
+                    responseHTML = `I couldn't find an exact match for all your preferences, but based on your love for <b>${genre}</b>, you might enjoy these: 🍿<br>`;
+                }
 
-        resetBtn.addEventListener('click', () => {
-            messages = [{ role: 'assistant', content: "Hello! I'm CineMatch AI. Tell me about your favorite genres, a specific vibe you're after, or even your current mood, and I'll find the perfect movie for you." }];
-            chatContainer.innerHTML = '';
-            chatContainer.appendChild(createMessageElement('assistant', messages[0].content));
-        });
+                if (matches.length > 0) {
+                    matches.forEach(movie => {
+                        responseHTML += `
+                            <div class="movie-card">
+                                <h4>${movie.name}</h4>
+                                <div class="movie-tags">${movie.genre} | ${movie.language} | ${movie.mood}</div>
+                                <div class="movie-desc">${movie.desc}</div>
+                            </div>
+                        `;
+                    });
+                    responseHTML += `<br>Enjoy your movie time! Let me know if you want to start over. 🍿🥤`;
+                } else {
+                    responseHTML = `I'm so sorry! 😔 My database is empty for that combination. Try restarting and picking different options!`;
+                }
 
-        // Focus input on load
-        window.onload = () => userInput.focus();
+                appendMessage('bot', responseHTML, true);
+                
+                // Add a specific quick reply to restart
+                appendQuickReplies(["Restart Chat 🔄"]);
+                // Override the click handler for this specific end-state button
+                const finalBtn = document.querySelector('.quick-replies .reply-chip');
+                if(finalBtn) {
+                    finalBtn.onclick = () => {
+                        removeQuickReplies();
+                        restartChat();
+                    };
+                }
+
+            }, 2000); // 2 seconds of "calculating" typing animation
+        }
+
     </script>
 </body>
 </html>
