@@ -6,9 +6,7 @@
 
 ## 🌐 Live Demo
 
-👉 **Try it here:**
-
-🔗 [Click here !!](https://movie-prediction-brown.vercel.app)
+👉 [Click to Open the App](https://movie-prediction-brown.vercel.app/)
 
 ---
 
@@ -108,7 +106,7 @@ index.html
 ## 📸 Screenshots
 
 ```
-![App Screenshot](screenshot.png)
+![App Screenshot](./screenshot.png)
 ```
 
 ---
