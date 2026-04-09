@@ -1,5 +1,9 @@
 # 🍿 Movie Matchmaker AI
 
+![Made with Love](https://img.shields.io/badge/Made%20with-❤️-red)
+![Tech](https://img.shields.io/badge/Tech-JavaScript-yellow)
+![Status](https://img.shields.io/badge/Status-Live-success)
+
 > 🚀 An intelligent movie recommendation chatbot that suggests the perfect movie based on your **mood, genre, and language preferences**.
 
 ---
@@ -15,6 +19,8 @@
 Movie Matchmaker AI is a beautifully designed **interactive web application** that eliminates endless scrolling by helping users quickly discover movies tailored to their current mood and preferences.
 
 With a conversational chatbot interface and a smart scoring algorithm, the system delivers **highly relevant movie recommendations in seconds**.
+
+> 🎯 Designed to make movie discovery faster, smarter, and more personalized.
 
 ---
 
@@ -87,7 +93,7 @@ The recommendation system uses a **weighted scoring mechanism**:
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/movie-matchmaker-ai.git
+git clone https://github.com/dk-khandelwal06/Movie-Prediction-Bot.git
 ```
 
 ### 2️⃣ Open the Project
