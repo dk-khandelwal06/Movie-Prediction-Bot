@@ -7,7 +7,7 @@
 ## 🌐 Live Demo
 
 👉 **Try it here:**
-🔗 [https://movie-prediction-brown.vercel.app](https://movie-prediction-brown.vercel.app)
+🔗 [Click here !!](https://movie-prediction-brown.vercel.app)
 
 ---
 
@@ -74,9 +74,11 @@ The recommendation system uses a **weighted scoring mechanism**:
 ## 📂 Project Structure
 
 ```
-📁 movie-matchmaker-ai
-│── index.html      # Main application file
-│── README.md       # Documentation
+📁 Movie-Prediction-Bot
+
+│── README.md         
+│── index.html        
+│── screenshot.png   
 ```
 
 ---
@@ -104,10 +106,6 @@ index.html
 
 ## 📸 Screenshots
 
-> ⚠️ Add screenshots here for better presentation
-
-Example:
-
 ```
 ![App Screenshot](screenshot.png)
 ```
@@ -125,29 +123,16 @@ Example:
 
 ---
 
-## 👨‍💻 Author
+## 🤝 Acknowledgements
 
-**Daksh Khandelwal** 🚀
-💡 AI | Web Development | Data Science
-
----
-
-## 🌟 Support
-
-If you found this project useful:
-
-⭐ Star this repository
-🍴 Fork it
-📢 Share it with others
+💡 Built as part of a project to experiment with AI-assisted coding using Cursor.ai.
 
 ---
 
-## 📜 License
+## 📬 Connect with Me
 
-This project is open-source and available under the **MIT License**.
-
----
-
-## 🔥 Final Note
-
-> Built with passion to make movie discovery smarter, faster, and more fun 🎬✨
+**Daksh Khandelwal**  
+1st Year – B.S. in AI & Data Science  
+📍 IIT Jodhpur  
+📧 dk.khandelwaliitj@gmail.com  
+🔗 [LinkedIn Profile](https://www.linkedin.com/in/daksh-khandelwal-b02748391/)
