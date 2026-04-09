@@ -105,9 +105,7 @@ index.html
 
 ## 📸 Screenshots
 
-```
 ![App Screenshot](./screenshot.png)
-```
 
 ---
 
